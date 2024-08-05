@@ -1,4 +1,6 @@
 # This is server code to send video frames over UDP so that client can save it
+from calendar import c
+from os import name
 import cv2, socket
 import numpy as np
 import base64
@@ -27,15 +29,12 @@ def main():
 
     # Dictionary to map file descriptors to their corresponding sockets
     fd_to_socket = {server_socket.fileno(): server_socket}
-    
-    current_events = [(server_socket.fileno(), select.POLLIN)]
-    
+
     while True:
         events = poll.poll()
-        print(events)
         for fd, event in events:
             if fd == server_socket.fileno():
-                conn, addr = server_socket.accept()
+                conn, _ = server_socket.accept()
                 print("Accepting new connection")
                 poll.register(conn, select.POLLIN)
                 fd_to_socket[conn.fileno()] = conn
@@ -46,15 +45,15 @@ def main():
                     if not msg:
                         raise ConnectionError("Client disconnected")
                     json_message = json.loads(msg)
-                    photo = json_message['photo']
-                    client_name = json_message['name']
+                    photo = json_message["photo"]
+                    client_name = json_message["name"]
                     photo_data = base64.b64decode(photo, " /")
                     npdata = np.frombuffer(photo_data, dtype=np.uint8)
                     frame = cv2.imdecode(npdata, 1)
-                    cv2.imshow(str(fd), frame)
-                    conn.sendall(b'OK')
+                    cv2.imshow(client_name, frame)
+                    conn.sendall(b"OK")
                     key = cv2.waitKey(1) & 0xFF
-                    if key == ord('q'):
+                    if key == ord("q"):
                         break
                 except ConnectionError as e:
                     cv2.destroyAllWindows()
@@ -63,11 +62,7 @@ def main():
                     conn.close()
                 except Exception as e:
                     print(e)
-                    
-                          
 
-        
-if __name__ ==  "__main__":
 
-    
+if __name__ == "__main__":
     main()
