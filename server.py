@@ -6,9 +6,10 @@ import numpy as np
 import base64
 import select
 import json
-
+import pulsar
 
 BUFF_SIZE = 65536
+
 
 
 def main():
@@ -20,6 +21,10 @@ def main():
     server_socket.bind(socket_address)
     server_socket.listen()
     print("Listening at:", socket_address)
+    
+    client = pulsar.Client('pulsar://localhost:6650')
+    producer = client.create_producer('result-surveilance')
+    print("Pulsar producer created")
 
     # Create a poll object
     poll = select.poll()
@@ -47,6 +52,7 @@ def main():
                     json_message = json.loads(msg)
                     photo = json_message["photo"]
                     client_name = json_message["name"]
+                    labels = json_message["labels"] # use labels here for showing on the screen
                     photo_data = base64.b64decode(photo, " /")
                     npdata = np.frombuffer(photo_data, dtype=np.uint8)
                     frame = cv2.imdecode(npdata, 1)
