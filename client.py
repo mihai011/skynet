@@ -1,21 +1,32 @@
 # This is client code to receive video frames over UDP and save as .MP4 file
+from curses import meta
 import cv2, imutils, socket
 import base64
 import json
 from datetime import datetime
 import argparse
 import time
-
-fourcc = 0x7634706D
-now = datetime.now()
-time_str = now.strftime("%d%m%Y%H%M%S")
-time_name = "_Rec_" + time_str + ".mp4"
-FPS = 30
-frame_shape = False
-
+import random
 
 BUFF_SIZE = 65536
-WIDTH = 600
+WIDTH = 630
+
+def frame_analysis(frame):
+    # code for recognition come here
+    # labels must be added also here
+    height, width = frame.shape[:2]
+    metadata = {}
+    labels = []
+    for i in range(random.randrange(1, 10)):
+        x1 = random.randrange(1, width)
+        y1 = random.randrange(1, height)
+        x2 = random.randrange(x1, width)
+        y2 = random.randrange(y1, height)
+        labels.append({"label":f"label_{i}","coordinates": [x1, y1, x2, y2]})
+
+    metadata["labels"] = labels
+    metadata["timestamp"] = time.time()
+    return metadata
 
 
 def main(my_name, video_source):
@@ -34,29 +45,27 @@ def main(my_name, video_source):
     client_socket.connect((host_ip, port))
 
     while True:
-        try:
-            _, frame = vid.read()
-            if frame is None:
-                print("Frame is null!")
-                continue
-            frame = imutils.resize(frame, width=WIDTH)
-            # code for recognition come here 
-            # lavbels must be added also here
-            _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-            photo = base64.b64encode(buffer).decode()
-            message = dict()
-            message["photo"] = photo
-            message["name"] = my_name
-            time_str = time.time()
-            message["labels"] = {"label1":[1,2,3,4], "label2":[1,2,3,4], "timestamp":time_str}
-            message = json.dumps(message)
-            client_socket.sendall(message.encode())
-            client_socket.recv(BUFF_SIZE)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
-        except Exception as e:
-            pass
+        
+        ret, frame = vid.read()
+        if ret is False:
+            vid =  cv2.VideoCapture(video_source)
+            continue
+            
+        frame = imutils.resize(frame, width=WIDTH)
+        metadata = frame_analysis(frame)
+        _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        photo = base64.b64encode(buffer).decode()
+        message = dict()
+        message["photo"] = photo
+        message["name"] = my_name
+        message["metadata"] = metadata
+        message = json.dumps(message)
+        client_socket.sendall(message.encode())
+        print(client_socket.recv(BUFF_SIZE))
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord("q"):
+            break
+        
 
 
 if __name__ == "__main__":

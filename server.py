@@ -10,7 +10,13 @@ import pulsar
 
 BUFF_SIZE = 65536
 
+def draw_labels(frame, metadata):
 
+    for label in metadata["labels"]:
+        x1, y1, x2, y2 = label["coordinates"]
+        frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+    return frame
 
 def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -52,11 +58,13 @@ def main():
                     json_message = json.loads(msg)
                     photo = json_message["photo"]
                     client_name = json_message["name"]
-                    labels = json_message["labels"] # use labels here for showing on the screen
+                    metadata = json_message["metadata"] # use labels here for showing on the screen
                     photo_data = base64.b64decode(photo, " /")
                     npdata = np.frombuffer(photo_data, dtype=np.uint8)
                     frame = cv2.imdecode(npdata, 1)
+                    frame = draw_labels(frame, metadata)
                     cv2.imshow(client_name, frame)
+                    producer.send(json.dumps(json_message).encode('utf-8'))
                     conn.sendall(b"OK")
                     key = cv2.waitKey(1) & 0xFF
                     if key == ord("q"):
@@ -66,8 +74,10 @@ def main():
                     poll.unregister(conn)
                     del fd_to_socket[fd]
                     conn.close()
-                except Exception as e:
-                    print(e)
+                except json.JSONDecodeError as e:
+                    print("Invalid message")
+                    conn.send(b"Invalid message")
+                    
 
 
 if __name__ == "__main__":

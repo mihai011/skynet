@@ -2,12 +2,11 @@ import pulsar
 
 client = pulsar.Client('pulsar://localhost:6650')
 
-consumer = client.subscribe('my-topic', 'my-subscription')
-
+consumer = client.subscribe('result-surveilance', 'operator')
+data = []
 while True:
     msg = consumer.receive()
     try:
-        print("Received message '{}' id='{}'".format(msg.data(), msg.message_id()))
         # Acknowledge successful processing of the message
         consumer.acknowledge(msg)
     except Exception:
