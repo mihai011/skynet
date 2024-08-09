@@ -22,7 +22,7 @@ def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
     host_ip = "0.0.0.0"  #  socket.gethostbyname(host_name)
-    port = 9999
+    port = 9998
     socket_address = (host_ip, port)
     server_socket.bind(socket_address)
     server_socket.listen()
@@ -65,7 +65,7 @@ def main():
                     frame = draw_labels(frame, metadata)
                     cv2.imshow(client_name, frame)
                     producer.send(json.dumps(json_message).encode('utf-8'))
-                    conn.sendall(b"OK")
+                    conn.send(b"OK")
                     key = cv2.waitKey(1) & 0xFF
                     if key == ord("q"):
                         break

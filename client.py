@@ -9,7 +9,8 @@ import time
 import random
 
 BUFF_SIZE = 65536
-WIDTH = 630
+RECV_BUFFER = 1024
+WIDTH = 600
 
 def frame_analysis(frame):
     # code for recognition come here
@@ -29,11 +30,11 @@ def frame_analysis(frame):
     return metadata
 
 
-def main(my_name, video_source):
+def main(my_name, video_source, host, port):
+    
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-    host_ip = "0.0.0.0"
-    port = 9999
+   
 
     if video_source in ["0", "1"]:
         video_source = int(video_source)
@@ -42,7 +43,7 @@ def main(my_name, video_source):
         print("Cannot open video!")
         exit()
 
-    client_socket.connect((host_ip, port))
+    client_socket.connect((host, port))
 
     while True:
         
@@ -61,7 +62,8 @@ def main(my_name, video_source):
         message["metadata"] = metadata
         message = json.dumps(message)
         client_socket.sendall(message.encode())
-        print(client_socket.recv(BUFF_SIZE))
+        time.sleep(0.1)
+        print(client_socket.recv(RECV_BUFFER))
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             break
@@ -72,5 +74,7 @@ if __name__ == "__main__":
     args = argparse.ArgumentParser()
     args.add_argument("--name", required=True)
     args.add_argument("--video", required=True)
+    args.add_argument("--host", default="0.0.0.0")
+    args.add_argument("--port", default=9999, type=int)
     args = args.parse_args()
-    main(args.name, args.video)
+    main(args.name, args.video, args.host, args.port)
