@@ -4,12 +4,32 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
-            "name": "Python Debugger: Current File",
+            "name": "Server",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
+            "module": "uvicorn",
+            "args": [
+                "aio_http_server:app",
+                "--reload"
+            ],
+            "jinja": true
+        },
+        {
+            "name": "Client",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aio_http_client.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--host",
+                "http://127.0.0.1:8000/upload",
+                "--video_source",
+                "intersection_1.mp4",
+                "--stream_name",
+                "my_test"
+            ],
         }
     ]
 }
