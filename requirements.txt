@@ -1,6 +1,3 @@
 opencv-python
 pulsar-client
 imutils
-pyarrow
-pyiceberg
-pandas
