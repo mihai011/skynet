@@ -4,6 +4,10 @@ import pickle
 import base64
 import argparse
 import pulsar
+from pulsar import ConsumerKeySharedPolicy
+
+
+key_shared_policy = ConsumerKeySharedPolicy()
 
 
 def draw_labels(frame, metadata):
@@ -18,10 +22,15 @@ def main(args):
     topic = args.topic
     subscription = args.subscription
     pulsar_host = args.pulsar_host
-    
+
     client = pulsar.Client(pulsar_host)
 
-    consumer = client.subscribe(topic, subscription)
+    consumer = client.subscribe(
+        topic,
+        subscription,
+        consumer_type=pulsar.ConsumerType.KeyShared,
+        key_shared_policy=key_shared_policy,
+    )
 
     while True:
         # Poll for a message
@@ -31,18 +40,24 @@ def main(args):
         data = pickle.loads(msg.value())
         buffer = data["image"]
         stream = data["stream"]
+        print(f"Received message with length {len(msg.data())} topic: {msg.topic_name()} stream: {msg.partition_key()}")  
         image_bytes = base64.b64decode(buffer)
         image_np = np.frombuffer(image_bytes, np.uint8)
         frame = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
         frame = draw_labels(frame, data["metadata"])
         cv2.imshow(stream, frame)
         cv2.waitKey(1)
+        consumer.acknowledge(msg)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--topic", type=str, default="result-surveillance", help="Topic")
-    parser.add_argument("--subscription", type=str, default="operator", help="Subscription")
+    parser.add_argument(
+        "--topic", type=str, default="result-surveillance", help="Topic name"
+    )
+    parser.add_argument(
+        "--subscription", type=str, default="operator", help="Subscription"
+    )
     parser.add_argument(
         "--pulsar_host", type=str, default="pulsar://localhost:6650", help="Pulsar host"
     )

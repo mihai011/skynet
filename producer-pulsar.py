@@ -8,7 +8,7 @@ import time
 import random
 
 
-FPS = 30
+FPS = 120
 DELAY = 1 / FPS
 IMAGE_WIDTH = 1000
 
@@ -65,7 +65,7 @@ def main(args):
         data["metadata"] = metadata
         value = pickle.dumps(data)
         # Produce a message to a specific topic
-        producer.send(value)
+        producer.send(value, partition_key=stream)
         # Wait for all messages in the producer queue to be delivered
         producer.flush()
         time.sleep(DELAY)
@@ -73,7 +73,9 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--topic", type=str, default="result-surveillance", help="Topic name")
+    parser.add_argument(
+        "--topic", type=str, default="result-surveillance", help="Topic name"
+    )
     parser.add_argument(
         "--video", type=str, default="intersection_3.mp4", help="Video file path"
     )
@@ -81,7 +83,8 @@ if __name__ == "__main__":
         "--stream", type=str, default="my_name", help="name of the stream"
     )
     parser.add_argument(
-        "--pulsar_host", type=str, default="pulsar://localhost:6650", help="Pulsar host")
+        "--pulsar_host", type=str, default="pulsar://localhost:6650", help="Pulsar host"
+    )
     args = parser.parse_args()
-    
+
     main(args)
