@@ -26,3 +26,13 @@ to expose your local pulsar service to the reverse proxy.
 Soon a domain name will be shown available to you that
 can be usen by consumers to send traffic to your local 
 service.
+
+
+Exercises:
+
+1. Start up the services and test out locally if the system work.
+2. Configure OpenCV to send data from your local laptop camera.
+3. Checkout the Pulsar Documentation and configure the pulsar consumer
+and producer to use a schema.
+4. Use a computer vision model (preferably something small tiny-YOLO)
+to send actual useful data to the consumers.
